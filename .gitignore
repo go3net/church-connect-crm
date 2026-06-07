@@ -9,3 +9,6 @@ build/
 .vercel
 prisma/*.db
 coverage/
+
+# build artifacts
+tsconfig.tsbuildinfo

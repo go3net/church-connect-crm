@@ -25,6 +25,8 @@ export type Permission =
   | "followup:write"
   | "prayer:write"
   | "broadcast:send"
+  | "automation:manage"
+  | "template:manage"
   | "report:read"
   | "billing:manage"
   | "platform:admin";
@@ -45,6 +47,8 @@ const MATRIX: Record<UserRole, Permission[]> = {
     "followup:write",
     "prayer:write",
     "broadcast:send",
+    "automation:manage",
+    "template:manage",
     "report:read",
     "billing:manage",
   ],
@@ -61,6 +65,8 @@ const MATRIX: Record<UserRole, Permission[]> = {
     "followup:write",
     "prayer:write",
     "broadcast:send",
+    "automation:manage",
+    "template:manage",
     "report:read",
     "billing:manage",
   ],
@@ -76,6 +82,8 @@ const MATRIX: Record<UserRole, Permission[]> = {
     "followup:write",
     "prayer:write",
     "broadcast:send",
+    "automation:manage",
+    "template:manage",
     "report:read",
   ],
   CELL_LEADER: [

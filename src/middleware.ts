@@ -10,5 +10,6 @@ export const config = {
     "/cell-groups/:path*",
     "/services/:path*",
     "/follow-ups/:path*",
+    "/broadcasts/:path*",
   ],
 };

@@ -10,6 +10,7 @@ import {
   PhoneCall,
   CalendarCheck,
   Network,
+  Megaphone,
   LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -21,6 +22,7 @@ const NAV = [
   { href: "/cell-groups", label: "Cell Groups", icon: Network },
   { href: "/services", label: "Services", icon: CalendarCheck },
   { href: "/follow-ups", label: "Follow-ups", icon: PhoneCall },
+  { href: "/broadcasts", label: "Broadcasts", icon: Megaphone },
 ];
 
 export function Sidebar({ name, role }: { name: string; role: string }) {

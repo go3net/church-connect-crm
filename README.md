@@ -41,3 +41,5 @@ Cron routes are POST-only and require the `x-cron-secret` header to match `CRON_
 ## Next steps (not yet built)
 
 Attendance/QR check-in, cell-group CRUD UI, broadcast composer, reports/export, billing (Paystack), AI follow-up suggestions, low-code automation builder. See the roadmap in the design doc.
+
+<!-- ci: auto-deploy test 102815 -->

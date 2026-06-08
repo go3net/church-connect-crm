@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -61,7 +62,13 @@ export default function LoginPage() {
             {loading ? "Signing in…" : "Sign in"}
           </Button>
         </form>
-        <p className="mt-4 text-center text-xs text-muted-foreground">
+        <p className="mt-4 text-center text-sm text-muted-foreground">
+          New here?{" "}
+          <Link href="/signup" className="font-medium text-primary">
+            Start your church
+          </Link>
+        </p>
+        <p className="mt-2 text-center text-xs text-muted-foreground">
           Demo: admin@gracechapel.org / password123
         </p>
       </Card>

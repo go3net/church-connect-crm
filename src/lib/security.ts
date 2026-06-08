@@ -43,5 +43,7 @@ export function sweepBuckets() {
   const now = Date.now();
   if (now - lastSweep < 60_000) return;
   lastSweep = now;
-  for (const [k, v] of buckets) if (now > v.resetAt) buckets.delete(k);
+  buckets.forEach((v, k) => {
+    if (now > v.resetAt) buckets.delete(k);
+  });
 }

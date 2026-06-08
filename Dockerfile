@@ -5,8 +5,9 @@ WORKDIR /app
 RUN apt-get update -y && apt-get install -y --no-install-recommends openssl ca-certificates \
   && rm -rf /var/lib/apt/lists/*
 
-# install deps (postinstall runs `prisma generate`)
+# install deps (postinstall runs `prisma generate`, so the schema must be present)
 COPY package.json package-lock.json ./
+COPY prisma ./prisma
 RUN npm ci
 
 # build

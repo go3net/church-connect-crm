@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { toast } from "sonner";
+import { Sparkles } from "lucide-react";
 import { Card, Badge, Button, Select } from "@/components/ui";
 
 interface FollowUp {
@@ -10,9 +11,18 @@ interface FollowUp {
   status: string;
   outcome: string | null;
   dueDate: string | null;
+  memberId: string | null;
+  firstTimerId: string | null;
   member: { firstName: string; lastName: string; phone: string } | null;
   firstTimer: { firstName: string; lastName: string; phone: string } | null;
   assignedTo: { name: string } | null;
+}
+
+interface Suggestion {
+  recommendedType: string;
+  rationale: string;
+  draftMessage: string;
+  source: string;
 }
 
 const OUTCOMES = ["CONTACTED", "NOT_CONTACTED", "INTERESTED", "NEEDS_PRAYER", "NEEDS_VISIT"];
@@ -21,6 +31,21 @@ export default function FollowUpsPage() {
   const [items, setItems] = useState<FollowUp[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("PENDING");
+  const [suggestions, setSuggestions] = useState<Record<string, Suggestion>>({});
+  const [aiBusy, setAiBusy] = useState("");
+
+  async function suggest(f: FollowUp) {
+    setAiBusy(f.id);
+    const res = await fetch("/api/ai/follow-up-suggestion", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ memberId: f.memberId ?? undefined, firstTimerId: f.firstTimerId ?? undefined }),
+    });
+    const data = await res.json();
+    setAiBusy("");
+    if (!res.ok) { toast.error(data.error ?? "Could not get suggestion"); return; }
+    setSuggestions((prev) => ({ ...prev, [f.id]: data.suggestion }));
+  }
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -72,38 +97,58 @@ export default function FollowUpsPage() {
           {items.map((f) => {
             const person = f.member ?? f.firstTimer;
             return (
-              <Card key={f.id} className="flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p className="font-medium">
-                      {person ? `${person.firstName} ${person.lastName}` : "Unknown"}
+              <Card key={f.id} className="p-4">
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium">
+                        {person ? `${person.firstName} ${person.lastName}` : "Unknown"}
+                      </p>
+                      <Badge variant="muted">{f.type}</Badge>
+                      {f.outcome && <Badge>{f.outcome.replace("_", " ")}</Badge>}
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {person?.phone} · assigned to {f.assignedTo?.name ?? "—"}
                     </p>
-                    <Badge variant="muted">{f.type}</Badge>
-                    {f.outcome && <Badge>{f.outcome.replace("_", " ")}</Badge>}
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    {person?.phone} · assigned to {f.assignedTo?.name ?? "—"}
-                  </p>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Select
-                    defaultValue=""
-                    onChange={(e) => e.target.value && update(f.id, { outcome: e.target.value })}
-                    className="w-44"
-                  >
-                    <option value="">Record outcome…</option>
-                    {OUTCOMES.map((o) => (
-                      <option key={o} value={o}>
-                        {o.replace("_", " ")}
-                      </option>
-                    ))}
-                  </Select>
-                  {f.status !== "COMPLETED" && (
-                    <Button size="sm" onClick={() => update(f.id, { status: "COMPLETED" })}>
-                      Mark done
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button size="sm" variant="ghost" onClick={() => suggest(f)} disabled={aiBusy === f.id}>
+                      <Sparkles className="h-4 w-4" /> {aiBusy === f.id ? "Thinking…" : "AI suggest"}
                     </Button>
-                  )}
+                    <Select
+                      defaultValue=""
+                      onChange={(e) => e.target.value && update(f.id, { outcome: e.target.value })}
+                      className="w-44"
+                    >
+                      <option value="">Record outcome…</option>
+                      {OUTCOMES.map((o) => (
+                        <option key={o} value={o}>
+                          {o.replace("_", " ")}
+                        </option>
+                      ))}
+                    </Select>
+                    {f.status !== "COMPLETED" && (
+                      <Button size="sm" onClick={() => update(f.id, { status: "COMPLETED" })}>
+                        Mark done
+                      </Button>
+                    )}
+                  </div>
                 </div>
+                {suggestions[f.id] && (
+                  <div className="mt-3 rounded-lg border bg-accent/40 p-3 text-sm">
+                    <div className="mb-1 flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-primary" />
+                      <span className="font-medium">Suggested: {suggestions[f.id].recommendedType}</span>
+                      <Badge variant="muted">{suggestions[f.id].source === "ai" ? "AI" : "rule-based"}</Badge>
+                    </div>
+                    <p className="mb-2 text-muted-foreground">{suggestions[f.id].rationale}</p>
+                    <p className="rounded bg-card p-2">{suggestions[f.id].draftMessage}</p>
+                    <Button size="sm" variant="outline" className="mt-2"
+                      onClick={() => { navigator.clipboard.writeText(suggestions[f.id].draftMessage); toast.success("Message copied"); }}>
+                      Copy message
+                    </Button>
+                  </div>
+                )}
               </Card>
             );
           })}

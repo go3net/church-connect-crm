@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { Card, Badge } from "@/components/ui";
@@ -46,8 +47,12 @@ export default async function MembersPage() {
             </thead>
             <tbody>
               {members.map((m) => (
-                <tr key={m.id} className="border-b last:border-0">
-                  <td className="px-4 py-3 font-medium">{fullName(m)}</td>
+                <tr key={m.id} className="border-b last:border-0 hover:bg-muted/40">
+                  <td className="px-4 py-3 font-medium">
+                    <Link href={`/members/${m.id}`} className="hover:text-primary hover:underline">
+                      {fullName(m)}
+                    </Link>
+                  </td>
                   <td className="px-4 py-3">{m.phone}</td>
                   <td className="px-4 py-3">{m.cellGroup?.name ?? "—"}</td>
                   <td className="px-4 py-3">
@@ -74,7 +79,7 @@ export default async function MembersPage() {
 
         <div className="divide-y md:hidden">
           {members.map((m) => (
-            <div key={m.id} className="flex items-center justify-between p-4">
+            <Link key={m.id} href={`/members/${m.id}`} className="flex items-center justify-between p-4 hover:bg-muted/40">
               <div>
                 <p className="font-medium">{fullName(m)}</p>
                 <p className="text-sm text-muted-foreground">{m.phone}</p>
@@ -82,7 +87,7 @@ export default async function MembersPage() {
               <Badge variant={STATUS_VARIANT[m.status] ?? "muted"}>
                 {m.status.replace("_", " ")}
               </Badge>
-            </div>
+            </Link>
           ))}
         </div>
       </Card>

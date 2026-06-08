@@ -1,5 +1,7 @@
 # Church Connect CRM
 
+**Live demo:** https://church-connect-crm-app-production.up.railway.app
+
 Multi-tenant SaaS for church membership, visitor follow-up, cell groups, and multi-channel (WhatsApp/SMS/email) engagement automation. Nigeria-first, built to scale across Africa.
 
 **Stack:** Next.js 14 · Prisma 5 · PostgreSQL · NextAuth (RBAC) · WhatsApp Cloud API · Termii/Twilio SMS · Resend · Anthropic Claude · Upstash · Cloudinary · Paystack · Sentry · Railway.

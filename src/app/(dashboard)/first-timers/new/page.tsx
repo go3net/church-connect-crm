@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button, Card, Input, Label, Select, Textarea } from "@/components/ui";
 
+const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
 export default function NewFirstTimerPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -12,8 +14,16 @@ export default function NewFirstTimerPage() {
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
-    const payload = Object.fromEntries(fd.entries());
-    (payload as any).wantsVisit = fd.get("wantsVisit") === "on";
+    const payload = Object.fromEntries(fd.entries()) as any;
+    payload.wantsVisit = fd.get("wantsVisit") === "on";
+
+    // birthday is day + month only — store with a neutral placeholder year (2000)
+    // so the birthday automation (matches on month/day) works without exposing age.
+    const mm = fd.get("birthMonth");
+    const dd = fd.get("birthDay");
+    if (mm && dd) payload.dateOfBirth = `2000-${mm}-${dd}`;
+    delete payload.birthMonth;
+    delete payload.birthDay;
 
     setLoading(true);
     const res = await fetch("/api/first-timers", {
@@ -56,7 +66,24 @@ export default function NewFirstTimerPage() {
               <option value="FEMALE">Female</option>
             </Select>
           </div>
-          <Field label="Date of birth" name="dateOfBirth" type="date" />
+          <div className="space-y-1.5">
+            <Label>Birthday (day & month)</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <Select name="birthDay" defaultValue="">
+                <option value="">Day</option>
+                {Array.from({ length: 31 }, (_, i) => {
+                  const d = String(i + 1).padStart(2, "0");
+                  return <option key={d} value={d}>{i + 1}</option>;
+                })}
+              </Select>
+              <Select name="birthMonth" defaultValue="">
+                <option value="">Month</option>
+                {MONTHS.map((m, i) => (
+                  <option key={m} value={String(i + 1).padStart(2, "0")}>{m}</option>
+                ))}
+              </Select>
+            </div>
+          </div>
           <Field label="Invited by" name="invitedByName" />
           <Field label="How did you hear about us?" name="howHeard" />
           <div className="sm:col-span-2">

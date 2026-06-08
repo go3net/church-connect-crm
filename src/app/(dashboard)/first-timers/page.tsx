@@ -48,8 +48,10 @@ export default async function FirstTimersPage() {
             </thead>
             <tbody>
               {firstTimers.map((ft) => (
-                <tr key={ft.id} className="border-b last:border-0">
-                  <td className="px-4 py-3 font-medium">{fullName(ft)}</td>
+                <tr key={ft.id} className="border-b last:border-0 hover:bg-muted/40">
+                  <td className="px-4 py-3 font-medium">
+                    <Link href={`/first-timers/${ft.id}`} className="hover:text-primary hover:underline">{fullName(ft)}</Link>
+                  </td>
                   <td className="px-4 py-3">{ft.phone}</td>
                   <td className="px-4 py-3">{ft.invitedByName ?? "—"}</td>
                   <td className="px-4 py-3">{formatDate(ft.createdAt)}</td>

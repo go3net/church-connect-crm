@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { Card, Badge } from "@/components/ui";
+import { Card, Badge, Button } from "@/components/ui";
 import { fullName, formatDate } from "@/lib/utils";
 import { ArrowLeft, Phone, Mail, MapPin, Cake, Users } from "lucide-react";
 
@@ -50,6 +50,9 @@ export default async function MemberDetailPage({ params }: { params: { id: strin
             {score !== null && <Badge variant="muted">Engagement {score}/100</Badge>}
           </div>
         </div>
+        <Link href={`/members/${member.id}/edit`}>
+          <Button variant="outline" size="sm">Edit</Button>
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">

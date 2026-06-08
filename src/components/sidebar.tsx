@@ -8,6 +8,7 @@ import {
   UserPlus,
   Users,
   PhoneCall,
+  CalendarCheck,
   LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -16,6 +17,7 @@ const NAV = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/first-timers", label: "First Timers", icon: UserPlus },
   { href: "/members", label: "Members", icon: Users },
+  { href: "/services", label: "Services", icon: CalendarCheck },
   { href: "/follow-ups", label: "Follow-ups", icon: PhoneCall },
 ];
 

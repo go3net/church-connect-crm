@@ -3,5 +3,11 @@ export { default } from "next-auth/middleware";
 // Protect the authenticated app. API routes do their own per-route guard
 // (requireCtx/requirePermission); cron routes use the CRON_SECRET.
 export const config = {
-  matcher: ["/dashboard/:path*", "/members/:path*", "/first-timers/:path*", "/follow-ups/:path*"],
+  matcher: [
+    "/dashboard/:path*",
+    "/members/:path*",
+    "/first-timers/:path*",
+    "/services/:path*",
+    "/follow-ups/:path*",
+  ],
 };

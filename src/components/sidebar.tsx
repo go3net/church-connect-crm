@@ -14,6 +14,8 @@ import {
   BarChart3,
   CreditCard,
   Workflow,
+  ShieldCheck,
+  Settings,
   LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -28,7 +30,9 @@ const NAV = [
   { href: "/broadcasts", label: "Broadcasts", icon: Megaphone },
   { href: "/automation", label: "Automation", icon: Workflow },
   { href: "/reports", label: "Reports", icon: BarChart3 },
+  { href: "/staff", label: "Staff", icon: ShieldCheck },
   { href: "/billing", label: "Billing", icon: CreditCard },
+  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 export function Sidebar({ name, role }: { name: string; role: string }) {

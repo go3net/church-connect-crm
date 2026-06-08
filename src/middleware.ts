@@ -13,6 +13,8 @@ export const config = {
     "/broadcasts/:path*",
     "/automation/:path*",
     "/reports/:path*",
+    "/staff/:path*",
     "/billing/:path*",
+    "/settings/:path*",
   ],
 };

@@ -11,6 +11,7 @@ import {
   CalendarCheck,
   Network,
   Megaphone,
+  BarChart3,
   LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -23,6 +24,7 @@ const NAV = [
   { href: "/services", label: "Services", icon: CalendarCheck },
   { href: "/follow-ups", label: "Follow-ups", icon: PhoneCall },
   { href: "/broadcasts", label: "Broadcasts", icon: Megaphone },
+  { href: "/reports", label: "Reports", icon: BarChart3 },
 ];
 
 export function Sidebar({ name, role }: { name: string; role: string }) {

@@ -11,5 +11,6 @@ export const config = {
     "/services/:path*",
     "/follow-ups/:path*",
     "/broadcasts/:path*",
+    "/reports/:path*",
   ],
 };

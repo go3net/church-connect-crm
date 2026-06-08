@@ -7,6 +7,7 @@ export const config = {
     "/dashboard/:path*",
     "/members/:path*",
     "/first-timers/:path*",
+    "/cell-groups/:path*",
     "/services/:path*",
     "/follow-ups/:path*",
   ],

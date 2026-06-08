@@ -4,6 +4,8 @@ import { db } from "@/lib/db";
 import { requirePermission, requireCtx, handle, tenantWhere } from "@/lib/tenant";
 import { audit } from "@/lib/audit";
 
+export const dynamic = "force-dynamic";
+
 const serviceSchema = z.object({
   name: z.string().min(1),
   type: z.enum(["SUNDAY", "MIDWEEK", "SPECIAL", "CELL_MEETING"]).optional(),

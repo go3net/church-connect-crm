@@ -3,6 +3,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { requirePermission, requireCtx, handle } from "@/lib/tenant";
 import { sendBroadcast } from "@/lib/broadcast";
+import { dispatchQueuedMessages } from "@/lib/messaging";
 import { audit } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
@@ -63,6 +64,11 @@ export async function POST(req: NextRequest) {
       entity: "CommunicationLog",
       description: `Broadcast ${d.channel} to ${d.segment} (${result.recipients} recipients)`,
     });
+
+    // drain a first batch now for instant feedback on small sends; the
+    // broadcast-dispatch cron handles any overflow.
+    await dispatchQueuedMessages(100).catch(() => {});
+
     return NextResponse.json({ ok: true, ...result });
   });
 }

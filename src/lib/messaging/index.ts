@@ -41,11 +41,8 @@ export interface DispatchInput {
   waTemplateName?: string | null;
 }
 
-/**
- * Render → send via the channel provider → persist a CommunicationLog row.
- * Returns the created log id. Single source of truth for all outbound messages.
- */
-export async function dispatchMessage(input: DispatchInput): Promise<string> {
+/** Render + persist a QUEUED CommunicationLog row WITHOUT sending. Returns log id. */
+export async function enqueueMessage(input: DispatchInput): Promise<string> {
   const vars = {
     firstName: input.person.firstName,
     lastName: input.person.lastName,
@@ -53,11 +50,9 @@ export async function dispatchMessage(input: DispatchInput): Promise<string> {
   };
   const body = renderTemplate(input.body, vars);
   const subject = input.subject ? renderTemplate(input.subject, vars) : null;
-
   const toAddress =
     input.channel === "EMAIL" ? input.person.email ?? "" : input.person.phone;
 
-  // create the log row up front (QUEUED) so nothing is ever lost
   const log = await db.communicationLog.create({
     data: {
       churchId: input.churchId,
@@ -72,30 +67,36 @@ export async function dispatchMessage(input: DispatchInput): Promise<string> {
       toAddress,
       subject,
       body,
-      status: "QUEUED",
+      status: toAddress ? "QUEUED" : "FAILED",
+      errorMessage: toAddress ? null : "No destination address",
     },
   });
+  return log.id;
+}
 
-  if (!toAddress) {
+/** Send one already-persisted QUEUED log via its channel provider + update status. */
+async function deliverLog(
+  log: {
+    id: string; churchId: string; channel: Channel; toAddress: string;
+    body: string; subject: string | null;
+  },
+  creds: { waPhoneId?: string | null; senderId?: string | null }
+): Promise<boolean> {
+  if (!log.toAddress) {
     await db.communicationLog.update({
       where: { id: log.id },
       data: { status: "FAILED", errorMessage: "No destination address" },
     });
-    return log.id;
+    return false;
   }
 
   let result;
-  if (input.channel === "WHATSAPP") {
-    result = await sendWhatsApp({
-      to: toAddress,
-      body,
-      templateName: input.waTemplateName,
-      phoneNumberId: input.waPhoneId,
-    });
-  } else if (input.channel === "SMS") {
-    result = await sendSms({ to: toAddress, body, senderId: input.smsSenderId });
+  if (log.channel === "WHATSAPP") {
+    result = await sendWhatsApp({ to: log.toAddress, body: log.body, phoneNumberId: creds.waPhoneId });
+  } else if (log.channel === "SMS") {
+    result = await sendSms({ to: log.toAddress, body: log.body, senderId: creds.senderId });
   } else {
-    result = await sendEmail({ to: toAddress, subject: subject ?? "", body });
+    result = await sendEmail({ to: log.toAddress, subject: log.subject ?? "", body: log.body });
   }
 
   await db.communicationLog.update({
@@ -109,15 +110,50 @@ export async function dispatchMessage(input: DispatchInput): Promise<string> {
     },
   });
 
-  // best-effort usage metering
   if (result.status === "SENT") {
     await db.subscription
-      .updateMany({
-        where: { churchId: input.churchId },
-        data: { messagesUsed: { increment: 1 } },
-      })
+      .updateMany({ where: { churchId: log.churchId }, data: { messagesUsed: { increment: 1 } } })
       .catch(() => {});
   }
+  return result.status === "SENT";
+}
 
-  return log.id;
+/**
+ * Drain QUEUED outbound messages (broadcast queue + any enqueued sends).
+ * Caches church creds per tenant to avoid N+1 lookups. Used by the
+ * broadcast-dispatch cron and for an immediate small drain after a broadcast.
+ */
+export async function dispatchQueuedMessages(limit = 200): Promise<{ sent: number; failed: number }> {
+  const queued = await db.communicationLog.findMany({
+    where: { status: "QUEUED", direction: "OUTBOUND" },
+    orderBy: { createdAt: "asc" },
+    take: limit,
+  });
+
+  const churchCache = new Map<string, { waPhoneId?: string | null; senderId?: string | null }>();
+  let sent = 0, failed = 0;
+  for (const log of queued) {
+    let creds = churchCache.get(log.churchId);
+    if (!creds) {
+      const c = await db.church.findUnique({ where: { id: log.churchId }, select: { waPhoneId: true, senderId: true } });
+      creds = { waPhoneId: c?.waPhoneId, senderId: c?.senderId };
+      churchCache.set(log.churchId, creds);
+    }
+    const ok = await deliverLog(log, creds).catch(() => false);
+    ok ? sent++ : failed++;
+  }
+  return { sent, failed };
+}
+
+/**
+ * Enqueue + send immediately. Single source of truth for transactional sends
+ * (automation steps, birthday/anniversary jobs) where volume per call is small.
+ */
+export async function dispatchMessage(input: DispatchInput): Promise<string> {
+  const id = await enqueueMessage(input);
+  const log = await db.communicationLog.findUnique({ where: { id } });
+  if (log && log.status === "QUEUED") {
+    await deliverLog(log, { waPhoneId: input.waPhoneId, senderId: input.smsSenderId }).catch(() => {});
+  }
+  return id;
 }

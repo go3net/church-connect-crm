@@ -1,6 +1,6 @@
 import type { Channel } from "@prisma/client";
 import { db } from "@/lib/db";
-import { dispatchMessage, type DispatchPerson } from "@/lib/messaging";
+import { enqueueMessage, type DispatchPerson } from "@/lib/messaging";
 
 export const SEGMENTS = [
   { value: "members_all", label: "All members" },
@@ -54,11 +54,10 @@ async function resolveRecipients(
 }
 
 /**
- * Send a one-off broadcast to a segment. Renders per recipient, dispatches via
- * the channel provider, and logs each to CommunicationLog. Returns counts.
- *
- * NOTE: sends sequentially up to MAX_RECIPIENTS. For large tenants this should
- * move to a queued cron job (broadcast-dispatch) — fine for MVP / dev-log mode.
+ * Queue a one-off broadcast to a segment. Renders + persists a QUEUED
+ * CommunicationLog per recipient (fast); the broadcast-dispatch cron drains
+ * the queue (and the API drains a first batch immediately for instant feedback
+ * on small sends). This keeps the request fast and survives large lists.
  */
 export async function sendBroadcast(opts: {
   churchId: string;
@@ -70,12 +69,12 @@ export async function sendBroadcast(opts: {
   templateId?: string | null;
 }): Promise<{ recipients: number }> {
   const recipients = await resolveRecipients(opts.churchId, opts.segment);
-  const church = await db.church.findUnique({ where: { id: opts.churchId } });
 
+  let queued = 0;
   for (const person of recipients) {
     // skip recipients lacking an address for the chosen channel
     if (opts.channel === "EMAIL" && !person.email) continue;
-    await dispatchMessage({
+    await enqueueMessage({
       churchId: opts.churchId,
       channel: opts.channel,
       person,
@@ -83,10 +82,9 @@ export async function sendBroadcast(opts: {
       subject: opts.subject,
       templateId: opts.templateId,
       senderId: opts.senderId,
-      waPhoneId: church?.waPhoneId,
-      smsSenderId: church?.senderId,
     }).catch(() => {});
+    queued++;
   }
 
-  return { recipients: recipients.length };
+  return { recipients: queued };
 }

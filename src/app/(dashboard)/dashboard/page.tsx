@@ -1,9 +1,36 @@
+import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { Card } from "@/components/ui";
+import { Card, Badge } from "@/components/ui";
+import { fullName } from "@/lib/utils";
 import { Users, UserPlus, CalendarHeart, PhoneCall, TrendingUp } from "lucide-react";
 
 export const dynamic = "force-dynamic";
+
+async function getLists(churchId: string) {
+  const now = new Date();
+  const month = now.getMonth() + 1;
+  const day = now.getDate();
+  const [birthdays, dueFollowUps, recentFirstTimers] = await Promise.all([
+    db.$queryRaw<{ id: string; firstName: string; lastName: string; phone: string }[]>`
+      SELECT id, "firstName", "lastName", phone FROM "Member"
+      WHERE "churchId" = ${churchId} AND "deletedAt" IS NULL AND "dateOfBirth" IS NOT NULL
+        AND EXTRACT(MONTH FROM "dateOfBirth") = ${month} AND EXTRACT(DAY FROM "dateOfBirth") = ${day}
+      LIMIT 8`,
+    db.followUp.findMany({
+      where: { churchId, status: { in: ["PENDING", "IN_PROGRESS"] } },
+      include: { member: { select: { firstName: true, lastName: true } }, firstTimer: { select: { firstName: true, lastName: true } } },
+      orderBy: { dueDate: "asc" },
+      take: 8,
+    }),
+    db.firstTimer.findMany({
+      where: { churchId, deletedAt: null, isConverted: false },
+      orderBy: { createdAt: "desc" },
+      take: 8,
+    }),
+  ]);
+  return { birthdays, dueFollowUps, recentFirstTimers };
+}
 
 async function getStats(churchId: string) {
   const now = new Date();
@@ -45,7 +72,7 @@ const STAT_CARDS = [
 export default async function DashboardPage() {
   const session = await auth();
   const churchId = session!.user.churchId!;
-  const stats = await getStats(churchId);
+  const [stats, lists] = await Promise.all([getStats(churchId), getLists(churchId)]);
   const church = await db.church.findUnique({ where: { id: churchId }, select: { name: true } });
 
   return (
@@ -74,14 +101,64 @@ export default async function DashboardPage() {
         })}
       </div>
 
-      <Card className="p-6">
-        <h2 className="mb-2 font-semibold">Quick start</h2>
-        <ul className="list-inside list-disc space-y-1 text-sm text-muted-foreground">
-          <li>Register a guest under <strong>First Timers</strong> — they are auto-enrolled in the welcome journey.</li>
-          <li>When a guest returns, open their record and <strong>Convert to member</strong>.</li>
-          <li><strong>Follow-ups</strong> shows your team&apos;s outstanding calls, visits and prayers.</li>
-        </ul>
-      </Card>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <Card className="p-5">
+          <div className="mb-3 flex items-center gap-2">
+            <CalendarHeart className="h-4 w-4 text-primary" />
+            <h2 className="font-semibold">Birthdays today</h2>
+          </div>
+          <div className="space-y-2 text-sm">
+            {lists.birthdays.map((b) => (
+              <div key={b.id} className="flex justify-between">
+                <span>{b.firstName} {b.lastName}</span>
+                <span className="text-muted-foreground">{b.phone}</span>
+              </div>
+            ))}
+            {lists.birthdays.length === 0 && <p className="text-muted-foreground">No birthdays today.</p>}
+          </div>
+        </Card>
+
+        <Card className="p-5">
+          <div className="mb-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <PhoneCall className="h-4 w-4 text-primary" />
+              <h2 className="font-semibold">Follow-ups due</h2>
+            </div>
+            <Link href="/follow-ups" className="text-xs text-primary hover:underline">View all</Link>
+          </div>
+          <div className="space-y-2 text-sm">
+            {lists.dueFollowUps.map((f) => {
+              const p = f.member ?? f.firstTimer;
+              return (
+                <div key={f.id} className="flex justify-between">
+                  <span>{p ? `${p.firstName} ${p.lastName}` : "—"}</span>
+                  <Badge variant="muted">{f.type}</Badge>
+                </div>
+              );
+            })}
+            {lists.dueFollowUps.length === 0 && <p className="text-muted-foreground">All caught up 🎉</p>}
+          </div>
+        </Card>
+
+        <Card className="p-5">
+          <div className="mb-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <UserPlus className="h-4 w-4 text-primary" />
+              <h2 className="font-semibold">Recent first timers</h2>
+            </div>
+            <Link href="/first-timers" className="text-xs text-primary hover:underline">View all</Link>
+          </div>
+          <div className="space-y-2 text-sm">
+            {lists.recentFirstTimers.map((f) => (
+              <div key={f.id} className="flex justify-between">
+                <span>{fullName(f)}</span>
+                <span className="text-muted-foreground">{f.phone}</span>
+              </div>
+            ))}
+            {lists.recentFirstTimers.length === 0 && <p className="text-muted-foreground">None yet.</p>}
+          </div>
+        </Card>
+      </div>
     </div>
   );
 }

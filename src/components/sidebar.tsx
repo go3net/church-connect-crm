@@ -16,6 +16,7 @@ import {
   Workflow,
   ShieldCheck,
   Settings,
+  HeartHandshake,
   LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -27,6 +28,7 @@ const NAV = [
   { href: "/cell-groups", label: "Cell Groups", icon: Network },
   { href: "/services", label: "Services", icon: CalendarCheck },
   { href: "/follow-ups", label: "Follow-ups", icon: PhoneCall },
+  { href: "/prayer", label: "Prayer", icon: HeartHandshake },
   { href: "/broadcasts", label: "Broadcasts", icon: Megaphone },
   { href: "/automation", label: "Automation", icon: Workflow },
   { href: "/reports", label: "Reports", icon: BarChart3 },

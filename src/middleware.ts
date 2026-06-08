@@ -10,6 +10,7 @@ export const config = {
     "/cell-groups/:path*",
     "/services/:path*",
     "/follow-ups/:path*",
+    "/prayer/:path*",
     "/broadcasts/:path*",
     "/automation/:path*",
     "/reports/:path*",

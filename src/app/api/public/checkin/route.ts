@@ -4,6 +4,9 @@ import { db } from "@/lib/db";
 import { handle } from "@/lib/tenant";
 import { normalizePhone } from "@/lib/phone";
 import { markAttendance } from "@/lib/attendance";
+import { rateLimit, rateLimitResponse, getIP, sweepBuckets } from "@/lib/security";
+
+export const dynamic = "force-dynamic";
 
 const schema = z.object({
   serviceId: z.string().min(1),
@@ -13,6 +16,10 @@ const schema = z.object({
 // POST /api/public/checkin — self check-in by phone (no auth; church derived from service)
 export async function POST(req: NextRequest) {
   return handle(async () => {
+    sweepBuckets();
+    // 30 check-ins per IP per minute (a whole congregation may share church wifi)
+    if (!rateLimit(`checkin:${getIP(req)}`, 30, 60_000)) return rateLimitResponse();
+
     const parsed = schema.safeParse(await req.json());
     if (!parsed.success) {
       return NextResponse.json({ error: "Phone and service required" }, { status: 422 });

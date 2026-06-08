@@ -6,6 +6,7 @@ import { handle } from "@/lib/tenant";
 import { normalizePhone } from "@/lib/phone";
 import { provisionChurchDefaults, ensurePlansAndGetFree } from "@/lib/provision";
 import { audit } from "@/lib/audit";
+import { rateLimit, rateLimitResponse, getIP, sweepBuckets } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +25,10 @@ function slugify(s: string): string {
 // POST /api/signup — public church self-registration
 export async function POST(req: NextRequest) {
   return handle(async () => {
+    sweepBuckets();
+    // 5 signups per IP per 10 minutes
+    if (!rateLimit(`signup:${getIP(req)}`, 5, 600_000)) return rateLimitResponse();
+
     const parsed = schema.safeParse(await req.json());
     if (!parsed.success) {
       return NextResponse.json(

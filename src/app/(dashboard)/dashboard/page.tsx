@@ -2,7 +2,7 @@ import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { Card, Badge } from "@/components/ui";
-import { fullName } from "@/lib/utils";
+import { fullName, cn } from "@/lib/utils";
 import { Users, UserPlus, CalendarHeart, PhoneCall, TrendingUp } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -78,23 +78,35 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold">{church?.name ?? "Dashboard"}</h1>
-        <p className="text-sm text-muted-foreground">
-          Welcome back, {session!.user.name}
-        </p>
+        <p className="text-sm font-medium text-muted-foreground">Welcome back, {session!.user.name}</p>
+        <h1 className="text-2xl font-bold md:text-3xl">{church?.name ?? "Dashboard"}</h1>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
-        {STAT_CARDS.map((c) => {
+      <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-5">
+        {STAT_CARDS.map((c, i) => {
           const Icon = c.icon;
+          const highlight = i === 0; // feature the first metric in black
           return (
-            <Card key={c.key} className="p-5">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">{c.label}</span>
-                <Icon className="h-4 w-4 text-primary" />
+            <Card
+              key={c.key}
+              className={cn(
+                "p-5",
+                highlight && "border-transparent brand-gradient text-white shadow-soft"
+              )}
+            >
+              <div
+                className={cn(
+                  "mb-3 inline-flex h-9 w-9 items-center justify-center rounded-lg",
+                  highlight ? "bg-brand-yellow text-neutral-900" : "bg-neutral-900 text-brand-yellow"
+                )}
+              >
+                <Icon className="h-[18px] w-[18px]" />
               </div>
-              <p className="mt-2 text-3xl font-bold">
+              <p className={cn("text-3xl font-bold tabular-nums", highlight && "text-white")}>
                 {(stats as Record<string, number>)[c.key]}
+              </p>
+              <p className={cn("mt-0.5 text-sm", highlight ? "text-neutral-300" : "text-muted-foreground")}>
+                {c.label}
               </p>
             </Card>
           );

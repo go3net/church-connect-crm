@@ -5,29 +5,46 @@
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 222 47% 11%;
+    --foreground: 0 0% 9%;
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-    --primary: 245 58% 51%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
-    --accent: 245 58% 96%;
-    --accent-foreground: 245 58% 35%;
+    --card-foreground: 0 0% 9%;
+    /* black primary */
+    --primary: 0 0% 9%;
+    --primary-foreground: 0 0% 98%;
+    /* yellow secondary */
+    --secondary: 48 96% 53%;
+    --secondary-foreground: 0 0% 9%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 42%;
+    /* pale-yellow accent for hovers / active states */
+    --accent: 48 100% 95%;
+    --accent-foreground: 0 0% 12%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 245 58% 51%;
-    --radius: 0.6rem;
+    --border: 0 0% 91%;
+    --input: 0 0% 91%;
+    --ring: 48 96% 53%;
+    --radius: 0.65rem;
+
+    /* brand surfaces */
+    --brand-dark: 0 0% 7%;
+    --brand-yellow: 48 96% 53%;
   }
 
   * {
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+  h1, h2, h3 {
+    @apply tracking-tight;
+  }
+}
+
+@layer utilities {
+  .brand-gradient {
+    background-image: linear-gradient(135deg, hsl(0 0% 9%) 0%, hsl(0 0% 16%) 100%);
   }
 }

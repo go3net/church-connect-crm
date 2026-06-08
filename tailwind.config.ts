@@ -44,6 +44,14 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        brand: {
+          dark: "hsl(var(--brand-dark))",
+          yellow: "hsl(var(--brand-yellow))",
+        },
+      },
+      boxShadow: {
+        card: "0 1px 2px 0 rgb(0 0 0 / 0.04), 0 1px 3px 0 rgb(0 0 0 / 0.06)",
+        soft: "0 4px 16px -4px rgb(0 0 0 / 0.10)",
       },
       borderRadius: {
         lg: "var(--radius)",

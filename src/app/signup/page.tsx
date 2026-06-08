@@ -45,13 +45,13 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/40 px-4 py-10">
+    <div className="flex min-h-screen items-center justify-center bg-neutral-950 px-4 py-10">
       <Card className="w-full max-w-md p-8">
         <div className="mb-6 text-center">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-lg font-bold text-primary-foreground">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-yellow text-lg font-extrabold text-neutral-900">
             CC
           </div>
-          <h1 className="text-xl font-semibold">Start your church</h1>
+          <h1 className="text-xl font-bold tracking-tight">Start your church</h1>
           <p className="text-sm text-muted-foreground">Free 14-day trial. No card required.</p>
         </div>
         <form onSubmit={onSubmit} className="space-y-4">

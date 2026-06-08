@@ -91,7 +91,8 @@ export default function ServicesPage() {
       )}
 
       <Card className="overflow-hidden">
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+        <table className="w-full min-w-[560px] text-sm">
           <thead className="border-b bg-muted/50 text-left text-xs uppercase text-muted-foreground">
             <tr>
               <th className="px-4 py-3">Service</th>
@@ -128,6 +129,7 @@ export default function ServicesPage() {
             )}
           </tbody>
         </table>
+        </div>
       </Card>
     </div>
   );

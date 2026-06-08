@@ -68,46 +68,46 @@ export async function advanceDueEnrollments(opts: {
   let completed = 0;
   let errors = 0;
 
+  const now = new Date();
   for (const e of due) {
     try {
-      const step = e.workflow.steps[e.currentStep];
-      if (!step) {
-        await db.automationEnrollment.update({
-          where: { id: e.id },
-          data: { status: "COMPLETED", completedAt: new Date(), nextRunAt: null },
-        });
-        completed++;
-        continue;
-      }
+      let currentStep = e.currentStep;
 
-      const person = e.member ?? e.firstTimer;
-      if (person) {
-        if (step.createsFollowUp) {
-          await createFollowUpForStep(e, step.followUpType ?? "CALL");
-        } else {
-          await runMessageStep(e, step.templateId, step.channel);
+      // run EVERY step whose scheduled time has already elapsed (handles
+      // multiple same-day steps, e.g. Day-0 welcome WhatsApp + SMS, and
+      // catches up if the cron missed a run).
+      while (true) {
+        const step = e.workflow.steps[currentStep];
+        if (!step) {
+          await db.automationEnrollment.update({
+            where: { id: e.id },
+            data: { status: "COMPLETED", completedAt: new Date(), nextRunAt: null },
+          });
+          completed++;
+          break;
         }
-      }
 
-      // schedule next step or complete
-      const nextIndex = e.currentStep + 1;
-      const nextStep = e.workflow.steps[nextIndex];
-      if (nextStep) {
-        await db.automationEnrollment.update({
-          where: { id: e.id },
-          data: {
-            currentStep: nextIndex,
-            nextRunAt: addDays(e.enrolledAt, nextStep.offsetDays),
-          },
-        });
-      } else {
-        await db.automationEnrollment.update({
-          where: { id: e.id },
-          data: { status: "COMPLETED", completedAt: new Date(), nextRunAt: null },
-        });
-        completed++;
+        const scheduledAt = addDays(e.enrolledAt, step.offsetDays);
+        if (scheduledAt > now) {
+          // next step is in the future — park the enrollment until then
+          await db.automationEnrollment.update({
+            where: { id: e.id },
+            data: { currentStep, nextRunAt: scheduledAt },
+          });
+          break;
+        }
+
+        const person = e.member ?? e.firstTimer;
+        if (person) {
+          if (step.createsFollowUp) {
+            await createFollowUpForStep(e, step.followUpType ?? "CALL");
+          } else {
+            await runMessageStep(e, step.templateId, step.channel);
+          }
+        }
+        processed++;
+        currentStep++;
       }
-      processed++;
     } catch (err) {
       errors++;
       console.error(`[automation] enrollment ${e.id} failed`, err);

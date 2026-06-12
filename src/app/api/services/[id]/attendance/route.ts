@@ -22,12 +22,18 @@ export async function GET(
     });
     if (!service) throw new HttpError(404, "Service not found");
 
-    const [members, marked] = await Promise.all([
+    const [members, firstTimers, marked] = await Promise.all([
       db.member.findMany({
         where: { churchId: ctx.churchId, deletedAt: null },
         select: { id: true, firstName: true, lastName: true, phone: true },
         orderBy: { firstName: "asc" },
         take: 1000,
+      }),
+      db.firstTimer.findMany({
+        where: { churchId: ctx.churchId, deletedAt: null, isConverted: false },
+        select: { id: true, firstName: true, lastName: true, phone: true },
+        orderBy: { createdAt: "desc" },
+        take: 500,
       }),
       db.attendance.findMany({
         where: { serviceId: params.id },
@@ -35,7 +41,8 @@ export async function GET(
       }),
     ]);
     const markedMemberIds = marked.map((a) => a.memberId).filter(Boolean);
-    return NextResponse.json({ service, members, markedMemberIds });
+    const markedFirstTimerIds = marked.map((a) => a.firstTimerId).filter(Boolean);
+    return NextResponse.json({ service, members, firstTimers, markedMemberIds, markedFirstTimerIds });
   });
 }
 
